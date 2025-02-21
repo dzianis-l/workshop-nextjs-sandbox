@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import postgres from 'postgres';
 import { invoices, customers, revenue, users } from '../lib/placeholder-data';
 
@@ -23,7 +23,7 @@ async function seedUsers() {
         VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
         ON CONFLICT (id) DO NOTHING;
       `;
-    }),
+    })
   );
 
   return insertedUsers;
@@ -48,8 +48,8 @@ async function seedInvoices() {
         INSERT INTO invoices (customer_id, amount, status, date)
         VALUES (${invoice.customer_id}, ${invoice.amount}, ${invoice.status}, ${invoice.date})
         ON CONFLICT (id) DO NOTHING;
-      `,
-    ),
+      `
+    )
   );
 
   return insertedInvoices;
@@ -73,8 +73,8 @@ async function seedCustomers() {
         INSERT INTO customers (id, name, email, image_url)
         VALUES (${customer.id}, ${customer.name}, ${customer.email}, ${customer.image_url})
         ON CONFLICT (id) DO NOTHING;
-      `,
-    ),
+      `
+    )
   );
 
   return insertedCustomers;
@@ -94,24 +94,39 @@ async function seedRevenue() {
         INSERT INTO revenue (month, revenue)
         VALUES (${rev.month}, ${rev.revenue})
         ON CONFLICT (month) DO NOTHING;
-      `,
-    ),
+      `
+    )
   );
 
   return insertedRevenue;
 }
 
-export async function GET() {
-  try {
-    const result = await sql.begin((sql) => [
-      seedUsers(),
-      seedCustomers(),
-      seedInvoices(),
-      seedRevenue(),
-    ]);
+async function dropTables() {
+  await sql`
+    DROP TABLE users;
+    DROP TABLE customers;
+    DROP TABLE invoices;
+    DROP TABLE revenue;
+`;
+}
 
-    return Response.json({ message: 'Database seeded successfully' });
-  } catch (error) {
-    return Response.json({ error }, { status: 500 });
-  }
+export async function GET() {
+  return Response.json(
+    { error: 'Data have been already prefilled' },
+    { status: 401 }
+  );
+
+  // try {
+  //   const result = await sql.begin((sql) => [
+  //     dropTables(),
+  //     seedUsers(),
+  //     seedCustomers(),
+  //     seedInvoices(),
+  //     seedRevenue(),
+  //   ]);
+  //
+  //   return Response.json({ message: 'Database seeded successfully' });
+  // } catch (error) {
+  //   return Response.json({ error }, { status: 500 });
+  // }
 }
